@@ -3,6 +3,7 @@ import { getCities } from "../../api/getCities";
 import { getWeather } from "../../api/getWeather";
 import styles from "./Weather.module.scss";
 import { CityContext } from "../../Store/cityContext";
+import WeatherCard from "../WeatherCard/WeatherCard";
 
 export default function Weather() {
   const [weather, setWeather] = useState<any>([]);
@@ -16,16 +17,21 @@ export default function Weather() {
     (async () => {
       setLoading(true);
       try {
+        // запрашиваем города
         const cities = await getCities(city, countryCode);
-        console.log(cities);
         if (cities.length > 0) {
+          // здесь можно сделать уточнение города
+          // но на данный момент берём просто 1й из пришедших городов
+          // если я правильно понял, то это наиболее популярный из
+          // всех
+
+          // получение координат нужного города
           const lat = cities[0].lat;
           const lon = cities[0].lon;
           try {
+            // получаем инфу по городу
             const weather = await getWeather(lat, lon);
-            console.log(weather);
-
-            setWeather(weather);
+            setWeather(weather.list);
             setLoading(false);
           } catch (error) {
             console.log(error);
@@ -41,34 +47,44 @@ export default function Weather() {
       }
     })();
   }, [context?.city.country, context?.city.name]);
+  let fiveDaysWeather: any[] = [];
+  if (!loading) {
+    const map = new Map();
+    weather.forEach((element: { dt_txt: string }) => {
+      const day = element.dt_txt.split(" ");
+      day.pop();
+      if (map.has(day[0])) {
+        map.get(day[0]).push(element);
+      } else {
+        if (map.size < 5) {
+          map.set(day[0], [element]);
+        }
+      }
+    });
+    // получаем массив из двух элементов
+    // 1й: дата, 2й - объект из данных о температуре
+    fiveDaysWeather = Array.from(map);
+  }
 
   return (
-    <div>
-      {loading === true
-        ? (isEmptyCities && (
-            <div>
-              "Нет такого города в нашей базе... проверьте название страны и
-              города"
-            </div>
-          )) ||
-          "loading"
-        : weather?.list.map((item: any) => {
-            const todayFull = new Date(item.dt * 1000);
-            return (
-              <div key={item.dt} className={styles.card}>
-                <p className={styles.date}>{todayFull.toString()}</p>
-                <p className={styles.temperature}>
-                  {Math.round(item.main.temp)}
-                </p>
-                <p className={styles.type}>{item.weather[0].description}</p>
-                <img
-                  className={styles.icon}
-                  src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`}
-                  alt="icon"
-                />
-              </div>
-            );
-          })}
+    <div className={styles.wrapper}>
+      {loading === true ? (
+        (isEmptyCities && (
+          <div>
+            "Нет такого города в нашей базе... проверьте название страны и
+            города"
+          </div>
+        )) ||
+        "loading"
+      ) : (
+        <>
+          <WeatherCard data={fiveDaysWeather[0]} isFirst={true} />
+          <WeatherCard data={fiveDaysWeather[1]} isFirst={false} />
+          <WeatherCard data={fiveDaysWeather[2]} isFirst={false} />
+          <WeatherCard data={fiveDaysWeather[3]} isFirst={false} />
+          <WeatherCard data={fiveDaysWeather[4]} isFirst={false} />
+        </>
+      )}
     </div>
   );
 }

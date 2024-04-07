@@ -265,8 +265,6 @@ export default function CityForm() {
 
   async function submitHandler(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log(currentCity);
-
     context?.setCity((prev) => {
       return {
         ...prev,
