@@ -1,6 +1,6 @@
 export async function getCities(city: string, country: string) {
   console.log("getting cities");
-  const KEY = "8ac4a344ea205edc13626598aeafba7b";
+
 
   try {
     const responseCities = await fetch(
