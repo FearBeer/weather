@@ -1,6 +1,6 @@
 export async function getWeather(lat: string, lon: string) {
   console.log("getting weather");
-  const KEY = "8d42fe19ea55fc5abba9a26866c0b904";
+
 
   try {
     const responseWether = await fetch(
